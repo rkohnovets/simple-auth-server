@@ -5,11 +5,7 @@
   "main": "index.js",
   "scripts": {
     "startdev": "nodemon index.js",
-    "start": "node index.js",
-
-    "gen-private-key": "ssh-keygen -t rsa -b 2048 -m PEM -f keys/rsa.key",
-    "gen-public-key": "openssl rsa -in keys/rsa.key -pubout -outform PEM -out keys/rsa.key.pub",
-    "generate-keys": "mkdir keys && npm run gen-private-key"
+    "start": "node index.js"
   },
   "keywords": [],
   "author": "",

@@ -2,10 +2,9 @@ module.exports = function (validRoles) {
     return function (request, response, next) {
         try {
             // по идее, до этого сработал мидлвар аутентификации
-            // соответственно JWT есть в любом случае
-
-            // создаём переменную userRoles со значением из свойства roles, тип того
-            const { roles: userRoles } = request.user
+            // (если всё правильно написано в authRouter)
+            // соответственно в request.user есть payload JWT-шки
+            const { id, roles } = request.user
 
             let hasValidRole = userRoles.some(role => validRoles.includes(role))
             if(!hasValidRole)

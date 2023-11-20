@@ -7,8 +7,9 @@ const port = process.env.PORT || 5000
 // generate new keys you can in: https://travistidwell.com/jsencrypt/demo/
 const privateKey = fs.readFileSync(path.join(__dirname, 'keys', 'rsa.key'), 'utf8')
 const publicKey = fs.readFileSync(path.join(__dirname, 'keys', 'rsa.key.pub'), 'utf8')
-//console.log(privateKey + " " + publicKey)
 
+// вообще это нужно как-то из переменных окружения доставать
+// или еще как-то, а не прост вписывать, но пока что так
 const mongo_user = 'testuser'
 const mongo_pass = 'testpassword'
 const mongo_cluster_url = 'myfreecluster.ugjdqge.mongodb.net/'
