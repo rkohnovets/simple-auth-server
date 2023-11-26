@@ -4,14 +4,23 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "startdev": "nodemon index.js",
-    "start": "node index.js"
+    "dev": "nodemon index.js",
+    "start": "node index.js",
+
+    "gen-private-key": "ssh-keygen -t rsa -b 2048 -m PEM -f keys/rsa.key",
+    "gen-public-key": "openssl rsa -in keys/rsa.key -pubout -outform PEM -out keys/rsa.key.pub",
+    "generate-keys": "mkdir keys && npm run gen-private-key && npm run gen-public-key",
+
+    "create-keys-and-cert": "openssl req -x509 -newkey rsa:2048 -keyout cert/keytmp.pem -out cert/cert.pem -days 365",
+    "get-decrypted-keys": "openssl rsa -in cert/keytmp.pem -out cert/key.pem",
+    "generate-cert": "mkdir cert && npm run create-keys-and-cert && npm run get-decrypted-keys"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "bcrypt": "^5.1.1",
+    "cors": "^2.8.5",
     "express": "^4.18.2",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.0.1",
