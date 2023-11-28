@@ -4,7 +4,7 @@ const cors = require('cors')
 const mongoose = require('mongoose')
 
 const config = require('./config')
-const authRouter = require('./auth/authRouter')
+const authRouter = require('./express/auth/router')
 
 const app = express()
 const server = https.createServer({key: config.key, cert: config.cert }, app);

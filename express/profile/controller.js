@@ -1,18 +1,23 @@
 const bcrypt = require('bcrypt')
 
-const User = require('../models/User')
-const Role = require('../models/Role')
-const config = require('../config')
-const jwtutils = require('../utils/jwtutils')
+const { User, isAboutValid, isNameValid, isPasswordValid, isUsernameValid } = require('../../models/User')
+const Role = require('../../models/Role')
+const config = require('../../config')
+const jwtutils = require('../../utils/jwtUtils')
 
 const exceptionHandler = (e, request, response) => {
     const exceptionString = `${e}`
+
     const devMessage = `Ошибка на сервере по пути ${request.path}: ${exceptionString}`
-    const prodMessage = `400: Ошибка на стороне сервера`
     console.log(devMessage)
-    let returnedMessage = config.development ? devMessage : prodMessage
-    returnedMessage = exceptionString.startsWith('USERMESSAGE')
-        ? exceptionString : returnedMessage
+
+    // решение не лучшее, но если проблемы с валидацией,
+    // и нужно отправить пользователю сообщение, то строка начинается с 'USERMESSAGE'
+    // (а фронт может обработать уже - вывести пользователю без этого префикса)
+    const returnedMessage = exceptionString.startsWith('USERMESSAGE')
+        ? exceptionString
+        : '400: Ошибка на стороне сервера'
+
     response.status(400).json(returnedMessage)
 }
 
@@ -50,42 +55,14 @@ const getUserInfo = (user) => {
     return {
         id: user._id,
         username: user.username,
-        roles: user.roles.map(role => role.value)
+        roles: user.roles.map(role => role.value),
+        name: user.name ?? "",
+        about: user.about ?? ""
     }
 }
 
-const isUsernameValid = (username) => {
-    const requirements =
-        'Usernames can only have:' +
-        '\n' + ' - Lowercase Letters (a-z)' +
-        '\n' + ' - Uppercase Letters (A-Z)' +
-        '\n' + ' - Numbers (0-9)' +
-        '\n' + 'Usernames should have length from 3 to 15'
 
-    const res = /^[a-zA-Z0-9]{3,15}$/.exec(username);
-    const valid = !!res;
-
-    //return valid;
-    if(!valid)
-        throw `USERMESSAGE ${requirements}`
-}
-const isPasswordValid = (password) => {
-    const requirements =
-        'Passwords can only have:' +
-        '\n' + ' - Lowercase Letters (a-z)' +
-        '\n' + ' - Uppercase Letters (A-Z)' +
-        '\n' + ' - Numbers (0-9)' +
-        '\n' + 'Passwords should have length from 3 to 15'
-
-    const res = /^[a-zA-Z0-9]{3,15}$/.exec(password);
-    const valid = !!res;
-
-    //return valid;
-    if(!valid)
-        throw `USERMESSAGE ${requirements}`
-}
-
-class authController {
+class controller {
     async publickey(request, response) {
         try {
             return response.json({
@@ -101,12 +78,6 @@ class authController {
             const body = await request.body // JSON
             const { username, password } = body
 
-            /*
-            if(!isUsernameValid(username))
-                throw 'Имя пользователя не соответствует требованиям'
-            if(!isPasswordValid(password))
-                throw 'Пароль не соответствует требованиям'
-             */
             // если что-то не так с юзернеймом или паролем,
             // то бросит исключение
             isUsernameValid(username)
@@ -197,4 +168,4 @@ class authController {
     }
 }
 
-module.exports = new authController()
+module.exports = new controller()

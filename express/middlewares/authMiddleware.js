@@ -1,4 +1,4 @@
-const jwtutils = require('../utils/jwtutils')
+const jwtutils = require('../../utils/jwtUtils')
 
 module.exports = function (request, response, next) {
     // TODO: хз чо это, видел в уроке, мб убрать
