@@ -1,6 +1,7 @@
 const { Schema, model } = require('mongoose')
+const Role = require("./Role");
 
-const User = new Schema({
+const UserSchema = new Schema({
     // неявно создастся поле _id
     username: {type: String, unique: true, required: true},
     passwordHash: {type: String, required: true},
@@ -11,7 +12,7 @@ const User = new Schema({
     // image: { type: String }
 })
 
-const isUsernameValid = (username) => {
+const validateUsername = (username) => {
     const requirements =
         'Usernames can only have:' +
         '\n' + ' - Lowercase Letters (a-z)' +
@@ -26,7 +27,7 @@ const isUsernameValid = (username) => {
     if(!valid)
         throw `USERMESSAGE ${requirements}`
 }
-const isPasswordValid = (password) => {
+const validatePassword = (password) => {
     const requirements =
         'Passwords can only have:' +
         '\n' + ' - Lowercase Letters (a-z)' +
@@ -41,28 +42,30 @@ const isPasswordValid = (password) => {
     if(!valid)
         throw `USERMESSAGE ${requirements}`
 }
-const isNameValid = (name) => {
+const validateName = (name) => {
     const requirements =
         'Name can only have:' +
         '\n' + ' - Lowercase Letters (a-z)' +
         '\n' + ' - Uppercase Letters (A-Z)' +
+        '\n' + ' - Spaces' +
         '\n' + 'Name should have length 0 to 50'
 
-    const res = /^[a-zA-Z]{0,50}$/.exec(name);
+    const res = /^[a-zA-Z ]{0,50}$/.exec(name);
     const valid = !!res;
 
     //return valid;
     if(!valid)
         throw `USERMESSAGE ${requirements}`
 }
-const isAboutValid = (about) => {
+const validateAbout = (about) => {
     const requirements =
         'About can only have:' +
         '\n' + ' - Lowercase Letters (a-z)' +
         '\n' + ' - Uppercase Letters (A-Z)' +
+        '\n' + ' - Spaces' +
         '\n' + 'About should have length 0 to 500'
 
-    const res = /^[a-zA-Z]{0,500}$/.exec(name);
+    const res = /^[a-zA-Z ]{0,500}$/.exec(about);
     const valid = !!res;
 
     //return valid;
@@ -70,10 +73,61 @@ const isAboutValid = (about) => {
         throw `USERMESSAGE ${requirements}`
 }
 
+const User = model('User', UserSchema)
+
+const createUser = async (username, passwordHash, roleStr = 'USER') => {
+    const role = await Role.findOne({ value: role })
+    const newUser = new User({
+        username: username,
+        passwordHash: passwordHash,
+        roles: [ role ]
+    })
+    await newUser.save()
+    return newUser
+}
+
+const getUserByFilter = async (filter) => {
+    const result = await User
+        .findOne(filter)
+        .populate('roles')
+        .exec()
+    return result
+}
+
+const formUserInfoToSend = (user, fields = null) => {
+    fields = fields ?? {
+        id: 1,
+        username: 1,
+        roles: 1,
+        name: 1,
+        about: 1
+    }
+
+    const result = {}
+
+    if('id' in fields)
+        result.id = user._id
+    if('username' in fields)
+        result.username = user.username
+    if('roles' in fields)
+        result.roles = user.roles.map(role => role.value)
+    if('name' in fields)
+        result.name = user.name ?? ""
+    if('about' in fields)
+        result.about = user.about ?? ""
+
+    return result
+}
+
 module.exports = {
-    User: model('User', User),
-    isUsernameValid,
-    isPasswordValid,
-    isNameValid,
-    isAboutValid
+    User,
+    createUser,
+    formUserInfoToSend,
+    getUserByFilter,
+    userValidation: {
+        username: validateUsername,
+        password: validatePassword,
+        name: validateName,
+        about: validateAbout
+    }
 }

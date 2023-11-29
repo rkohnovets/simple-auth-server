@@ -1,8 +1,8 @@
 const Router = require('express')
 
 const controller = require('./controller')
-const authMiddleware = require('../middlewares/authMiddleware')
-const roleMiddlewareFactory = require('../middlewares/roleMiddlewareFactory')
+const authMiddleware = require('../shared/authMiddleware')
+const roleMiddlewareFactory = require('../shared/roleMiddlewareFactory')
 
 const router = Router()
 
