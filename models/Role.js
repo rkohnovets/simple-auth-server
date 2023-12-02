@@ -1,7 +1,7 @@
 const { Schema, model } = require('mongoose')
 
 const Role = new Schema({
-    value: {
+    name: {
         type: String,
         unique: true,
         default: 'USER'

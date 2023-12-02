@@ -3,13 +3,13 @@ const Role = require("./Role");
 
 const UserSchema = new Schema({
     // неявно создастся поле _id
-    username: {type: String, unique: true, required: true},
-    passwordHash: {type: String, required: true},
-    roles: [{type: Schema.Types.ObjectId, ref: 'Role' }],
+    username: { type: String, unique: true, required: true },
+    passwordHash: { type: String, required: true },
+    roles: [{ type: Schema.Types.ObjectId, ref: 'Role' }],
     name: { type: String },
     about: { type: String },
-    // TODO: ссылка на картинку аватарки, мб заюзать S3 или чето вручную сделать
-    // image: { type: String }
+    // TODO: будет идентификатор в коллекции файлов файлового сервера
+    image: { type: Schema.Types.ObjectId }
 })
 
 const validateUsername = (username) => {
@@ -75,12 +75,18 @@ const validateAbout = (about) => {
 
 const User = model('User', UserSchema)
 
-const createUser = async (username, passwordHash, roleStr = 'USER') => {
-    const role = await Role.findOne({ value: role })
+const createUser = async (username, passwordHash, rolesStrings = ['USER']) => {
+    const roles = []
+    for(const roleStr of rolesStrings) {
+        const role = await Role.findOne({ name: roleStr })
+        if(!role)
+            throw `Ошибка: запрошенной для создания пользователя роли ${roleStr} нет в БД`
+        roles.push(role)
+    }
     const newUser = new User({
         username: username,
         passwordHash: passwordHash,
-        roles: [ role ]
+        roles: roles
     })
     await newUser.save()
     return newUser
@@ -93,6 +99,8 @@ const getUserByFilter = async (filter) => {
         .exec()
     return result
 }
+const getUserById = async (id) => await getUserByFilter({ _id: id })
+const getUserByUsername = async (username) => await getUserByFilter({ username: username })
 
 const formUserInfoToSend = (user, fields = null) => {
     fields = fields ?? {
@@ -110,7 +118,7 @@ const formUserInfoToSend = (user, fields = null) => {
     if('username' in fields)
         result.username = user.username
     if('roles' in fields)
-        result.roles = user.roles.map(role => role.value)
+        result.roles = user.roles.map(role => role.name)
     if('name' in fields)
         result.name = user.name ?? ""
     if('about' in fields)
@@ -123,7 +131,11 @@ module.exports = {
     User,
     createUser,
     formUserInfoToSend,
-    getUserByFilter,
+    userGetting: {
+        byFilter: getUserByFilter,
+        byId: getUserById,
+        byUsername: getUserByUsername
+    },
     userValidation: {
         username: validateUsername,
         password: validatePassword,

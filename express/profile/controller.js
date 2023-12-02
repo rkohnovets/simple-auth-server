@@ -1,9 +1,6 @@
-const { User, getUserByFilter, userValidation, formUserInfoToSend } = require('../../models/User')
+const { User, userGetting, userValidation, formUserInfoToSend } = require('../../models/User')
 const Role = require('../../models/Role')
 const { exceptionHandler } = require('../shared/exceptionHandler')
-
-const getUserById = async (id) => await getUserByFilter({ _id: id })
-const getUserByUsername = async (username) => await getUserByFilter({ username: username })
 
 class controller {
     async getProfile(request, response) {
@@ -11,7 +8,10 @@ class controller {
             // см. router.js
             const usernameParam = request.params.username
 
-            const fieldsString = request.headers['Fields']
+            // даже если в запросе заголовок 'Fields',
+            // то приведет к нижнему регистру
+            const fieldsString = request.headers['fields']
+            //console.log(JSON.stringify(request.headers))
             let fields = null
             if(fieldsString) {
                 const fieldsArr = fieldsString.split(',')
@@ -22,18 +22,15 @@ class controller {
 
             let user = null
             if(usernameParam) {
-                // ищем по юзернейму (тогда аутентификация не нужна)
-
+                // 1) ищем по юзернейму (аутентификация не нужна)
                 // бросит исключение, если что-то не так
                 userValidation.username(usernameParam)
-
-                user = await getUserByUsername(usernameParam)
+                user = await userGetting.byUsername(usernameParam)
             } else {
-                // ищем по айдишнику из JWT
+                // 2) ищем по айдишнику из JWT
                 const { id, roles } = request.user
-                user = await getUserById(id)
+                user = await userGetting.byId(id)
             }
-
             if(!user)
                 throw 'USERMESSAGE Пользователь не найден'
 
@@ -53,26 +50,26 @@ class controller {
             let user = null
             let admin = false
             if(usernameParam) {
-                // по юзернейму только для админов (так настроил в router.js)\
+                // 1) по юзернейму (только для админов, см. router.js)
                 admin = true
                 userValidation.username(usernameParam)
-                user = await getUserByUsername(usernameParam)
+                user = await userGetting.byUsername(usernameParam)
             } else {
-                // ищем по айдишнику из JWT
+                // 2) по айдишнику из JWT
                 const { id, roles } = request.user
-                user = await getUserById(id)
+                user = await userGetting.byId(id)
             }
 
             if(!user)
                 throw 'USERMESSAGE Пользователь не найден'
 
             if(id)
-                throw 'USERMESSAGE id пользователя поменять нельзя'
+                throw 'Ошибка: попытка поменять id пользователя'
 
             if(username) {
                 userValidation.username(username)
 
-                const userWithTheSameUsername = getUserByUsername(username)
+                const userWithTheSameUsername = userGetting.byUsername(username)
 
                 if(userWithTheSameUsername)
                     throw 'USERMESSAGE Данный юзернейм занят'
@@ -84,14 +81,14 @@ class controller {
                 if(admin) {
                     user.roles = []
                     for(const roleStr of roles) {
-                        const role = await Role.findOne({ value: roleStr })
+                        const role = await Role.findOne({ name: roleStr })
                         if(!role)
                             throw `USERMESSAGE Не найдена роль с названием "${roleStr}"`
                         user.roles.append(role)
                     }
                 }
                 else
-                    throw 'USERMESSAGE Менять список ролей пользователя могут только администраторы'
+                    throw 'Ошибка: Менять список ролей пользователя могут только администраторы'
             }
 
             if(name) {
