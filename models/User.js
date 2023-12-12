@@ -127,6 +127,40 @@ const formUserInfoToSend = (user, fields = null) => {
     return result
 }
 
+const getUsersByQuery = async (query) => {
+    if(query.length < 1)
+        throw 'USERMESSAGE Пустой запрос для поиска'
+
+    const result = []
+
+    try {
+        const byId = await getUserById(query)
+        if(byId)
+            result.push(byId)
+    }
+    catch {
+    }
+
+    const byUsername = await User.aggregate([
+            { $match: { username: { $regex: query, $options:'i' } } },
+            { $limit: 100 }
+        ])
+        .exec()
+
+    if (byUsername)
+        result.push(...byUsername)
+
+    const byName = await User.aggregate([
+        { $match: { name: { $regex: query, $options: 'i' } } },
+        { $limit: 100 }
+    ]).exec()
+
+    if (byName)
+        result.push(...byName)
+
+    return result
+}
+
 module.exports = {
     User,
     createUser,
@@ -134,7 +168,8 @@ module.exports = {
     userGetting: {
         byFilter: getUserByFilter,
         byId: getUserById,
-        byUsername: getUserByUsername
+        byUsername: getUserByUsername,
+        byQuery: getUsersByQuery
     },
     userValidation: {
         username: validateUsername,

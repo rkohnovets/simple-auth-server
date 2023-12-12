@@ -7,6 +7,7 @@ class controller {
         try {
             // см. router.js
             const usernameParam = request.params.username
+            const idParam = request.params.id
 
             // даже если в запросе заголовок 'Fields',
             // то приведет к нижнему регистру
@@ -26,8 +27,13 @@ class controller {
                 // бросит исключение, если что-то не так
                 userValidation.username(usernameParam)
                 user = await userGetting.byUsername(usernameParam)
+            } else if(idParam) {
+                // 1) ищем по айдишнику (аутентификация не нужна)
+                // бросит исключение, если что-то не так
+                userValidation.username(usernameParam)
+                user = await userGetting.byId(idParam)
             } else {
-                // 2) ищем по айдишнику из JWT
+                // 3) ищем по айдишнику из JWT
                 const { id, roles } = request.user
                 user = await userGetting.byId(id)
             }
@@ -104,6 +110,19 @@ class controller {
             await user.save()
 
             return response.json({ message: "User profile updated"})
+        }
+        catch (e) {
+            exceptionHandler(e, request, response)
+        }
+    }
+
+    async getUsersByQuery(request, response) {
+        try {
+            const query = request.query.query
+            if(!query)
+                throw 'USERMESSAGE Пустой запрос'
+            const usersByQuery = await userGetting.byQuery(query)
+            return response.json(usersByQuery)
         }
         catch (e) {
             exceptionHandler(e, request, response)

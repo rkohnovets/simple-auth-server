@@ -12,10 +12,12 @@ const generateAccessToken = (user) => {
 class controller {
     async getPublicKey(request, response) {
         try {
-            return response.json({ publicKey: config.publicKey })
+            console.log('sent public key')
+            response.json({ publicKey: config.publicKey })
         }
         catch (e) {
             exceptionHandler(e, request, response)
+        } finally {
         }
     }
     async register(request, response) {
