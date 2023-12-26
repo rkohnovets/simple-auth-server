@@ -40,7 +40,7 @@ class controller {
             if(!user)
                 throw 'USERMESSAGE Пользователь не найден'
 
-            const result = formUserInfoToSend(user, fields)
+            const result = await formUserInfoToSend(user, fields)
             return response.json(result)
         }
         catch (e) {
@@ -75,7 +75,7 @@ class controller {
             if(username) {
                 userValidation.username(username)
 
-                const userWithTheSameUsername = userGetting.byUsername(username)
+                const userWithTheSameUsername = await userGetting.byUsername(username)
 
                 if(userWithTheSameUsername)
                     throw 'USERMESSAGE Данный юзернейм занят'
@@ -118,11 +118,26 @@ class controller {
 
     async getUsersByQuery(request, response) {
         try {
-            const query = request.query.query
+            const query = request.headers['query']
             if(!query)
                 throw 'USERMESSAGE Пустой запрос'
+            
             const usersByQuery = await userGetting.byQuery(query)
-            return response.json(usersByQuery)
+
+            //distinct by id
+            let users = []
+            for(let user of usersByQuery) {
+                let found = false
+                for(let user2 of users)
+                    if(user2._id == user._id)
+                        found = true
+                if(!found)
+                    users.push(user)
+            }
+
+            const result = await Promise.all(users.map(async user => await formUserInfoToSend(user)))
+
+            return response.json(result)
         }
         catch (e) {
             exceptionHandler(e, request, response)

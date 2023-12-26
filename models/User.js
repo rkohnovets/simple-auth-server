@@ -102,7 +102,7 @@ const getUserByFilter = async (filter) => {
 const getUserById = async (id) => await getUserByFilter({ _id: id })
 const getUserByUsername = async (username) => await getUserByFilter({ username: username })
 
-const formUserInfoToSend = (user, fields = null) => {
+const formUserInfoToSend = async (user, fields = null) => {
     fields = fields ?? {
         id: 1,
         username: 1,
@@ -117,8 +117,16 @@ const formUserInfoToSend = (user, fields = null) => {
         result.id = user._id
     if('username' in fields)
         result.username = user.username
-    if('roles' in fields)
-        result.roles = user.roles.map(role => role.name)
+    if('roles' in fields) {
+        result.roles = await Promise.all(user.roles.map(async role => {
+            // если role был получен с помощью populate()
+            if(role.name)
+                return role.name
+            // если role как хранится в монге - айдишником
+            const roleObj = await Role.findOne({ _id: role })
+            return roleObj.name
+        }))
+    }
     if('name' in fields)
         result.name = user.name ?? ""
     if('about' in fields)
@@ -133,17 +141,36 @@ const getUsersByQuery = async (query) => {
 
     const result = []
 
+    // трай кетч потому что query может не скаститься к ObjectId
+    // TODO: вообще глянуть, мб нужно не просто строку туда закидывать,
+    // а new ObjectId(query)
     try {
-        const byId = await getUserById(query)
+        //const byId = await getUserById(query)
+        const byId = await User.findOne({ _id: query })
         if(byId)
             result.push(byId)
     }
-    catch {
-    }
+    catch { }
 
     const byUsername = await User.aggregate([
             { $match: { username: { $regex: query, $options:'i' } } },
-            { $limit: 100 }
+            { $limit: 100 },
+            // прикольная штука, по сути оптимизированная замена populate(), 
+            // но легче пока что сделать без нее
+            /*
+            { $lookup: {
+                from: 'roles',
+                localField: 'roles',
+                foreignField: '_id',
+                as: 'roles'
+            }},
+            { $project: {
+                roles: '$roles.name',
+                name: 1,
+                username: 1,
+                about: 1
+            }}
+            */
         ])
         .exec()
 

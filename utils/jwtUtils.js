@@ -14,11 +14,6 @@ module.exports = {
                 }
             );
         } catch (err) {
-            /*
-                TODO throw http 500 here
-                ! Dont send JWT error messages to the client
-                ! Let exception handler handles this error
-            */
             throw err
         }
     },
@@ -28,16 +23,11 @@ module.exports = {
             return jwt.verify(
                 token,
                 config.publicKey,
-                {
-                    algorithm: 'RS256'
+                { 
+                    algorithm: 'RS256' 
                 }
             );
         } catch (err) {
-            /*
-                TODO throw http 500 here
-                ! Dont send JWT error messages to the client
-                ! Let exception handler handles this error
-            */
             throw err
         }
     }

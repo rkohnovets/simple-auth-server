@@ -4,20 +4,18 @@ const jwtUtils = require('../../utils/jwtUtils')
 const passwordUtils = require('../../utils/passwordUtils')
 const { exceptionHandler } = require('../shared/exceptionHandler')
 
-const generateAccessToken = (user) => {
-    const payload = formUserInfoToSend(user, { id: 1, roles: 1})
+const generateAccessToken = async (user) => {
+    const payload = await formUserInfoToSend(user, { id: 1, roles: 1})
     return jwtUtils.signToken(payload)
 }
 
 class controller {
     async getPublicKey(request, response) {
         try {
-            console.log('sent public key')
             response.json({ publicKey: config.publicKey })
         }
         catch (e) {
             exceptionHandler(e, request, response)
-        } finally {
         }
     }
     async register(request, response) {
@@ -31,13 +29,13 @@ class controller {
 
             const user = await userGetting.byUsername(username)
             if(user)
-                throw 'Уже существует пользователь с таким же юзернеймом'
+                throw 'USERMESSAGE Уже существует пользователь с таким же юзернеймом'
 
             const passwordHash = passwordUtils.hashPassword(password)
             const createdUser = await createUser(username, passwordHash)
-            const accessToken = generateAccessToken(createdUser)
+            const accessToken = await generateAccessToken(createdUser)
 
-            return response.json({ jwt: accessToken })
+            response.json(accessToken)
         }
         catch (e) {
             exceptionHandler(e, request, response)
@@ -50,15 +48,15 @@ class controller {
 
             const user = await userGetting.byUsername(username)
             if(!user)
-                throw 'Пользователя с данным юзернеймом не найдено'
+                throw 'USERMESSAGE Пользователя с данным юзернеймом не найдено'
 
             const validPassword = passwordUtils.checkPassword(password, user.passwordHash)
             if(!validPassword)
-                throw 'Неверный пароль'
+                throw 'USERMESSAGE Неверный пароль'
 
-            const accessToken = generateAccessToken(user)
+            const accessToken = await generateAccessToken(user)
 
-            return response.json({ jwt: accessToken })
+            response.json(accessToken)
         }
         catch (e) {
             exceptionHandler(e, request, response)
@@ -74,9 +72,9 @@ class controller {
             if(!user)
                 throw "Ошибка: получен валидный JWT, но пользователь с таким id не найден"
 
-            const accessToken = generateAccessToken(user)
+            const accessToken = await generateAccessToken(user)
 
-            return response.json({ jwt: accessToken })
+            response.json(accessToken)
         }
         catch (e) {
             exceptionHandler(e, request, response)
@@ -106,7 +104,7 @@ class controller {
             user.passwordHash = passwordUtils.hashPassword(newPassword)
             await user.save()
 
-            return response.json({ message: 'Password changed' })
+            response.json({ message: 'Password changed' })
         }
         catch (e) {
             exceptionHandler(e, request, response)
