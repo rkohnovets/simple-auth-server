@@ -125,6 +125,7 @@ class controller {
             const usersByQuery = await userGetting.byQuery(query)
 
             //distinct by id
+            // TODO: всетаки остаются дубликаты
             let users = []
             for(let user of usersByQuery) {
                 let found = false

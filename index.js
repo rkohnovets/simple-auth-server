@@ -19,8 +19,8 @@ app.use('/profile', profileRouter)
 const start = async () => {
     try {
         await mongoose.connect(config.mongo_conn_str)
-        //app.listen(config.port, // http
-        server.listen(config.port, // https
+        app.listen(config.port, // http
+        //server.listen(config.port, // https
             () => {
             console.log(`server started on ${config.port}`)
         })
